@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table, th, td {
+    border: 1px solid black;
+    border-collapse:collapse;
+}
+th, td {
+    padding: 5px;
+}
+pre {
+ white-space: pre-wrap;       /* css-3 */
+ white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+ white-space: -pre-wrap;      /* Opera 4-6 */
+ white-space: -o-pre-wrap;    /* Opera 7 */
+ word-wrap: break-word;       /* Internet Explorer 5.5+ */
+ font-family: Calibri, Arial, serif;
+ height: 170px;
+ overflow: auto; /*longer descriptions will get a scrollbar */
+}
+body {
+font-family: Calibri, Arial, serif;
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+<h2>Youtube channel browser</h2>
+<p>
+Channel / Username: <input id="in_channel" value="arvindguptatoys"> <small>like arvindguptatoys, etc. put exact username, seen as in https://www.youtube.com/user/arvindguptatoys  </small><br>
+OR, Playlist id: <input id="in_playlist"> <small>like PL6E92FE8AF927E4F1 in https://www.youtube.com/playlist?list=PL6E92FE8AF927E4F1 . Leave above channel box blank if using this. </small><br>
+Search query, if any: <input id="in_search"> <small>like Hindi, English, Marathi, pump, etc. Put space between two words, no special chars. Leave it blank if you just want listing. This only searches title, not description.</small> <br>
+Index from <input id="in_startindex" value="1"> to <input id="in_endindex" value="500"> <small>(1 to 500 will list the latest 500 videos)</small> <br>
+<input type="button" value="Click to List" onclick="listchannel()">
+<div id="out_listing"></div>
+
+<script>
+function listchannel() {
+document.getElementById("out_listing").innerHTML = "Loading.. please wait..";
+var PITARA = "";
+var CHANNEL = document.getElementById("in_channel").value.trim();
+var PLAYLIST = document.getElementById("in_playlist").value.trim();
+var SEARCH = document.getElementById("in_search").value ? "&q=" + document.getElementById("in_search").value.replace(/ /g,"+") : "";
+var STARTINDEX = parseInt(document.getElementById("in_startindex").value);
+var ENDINDEX = parseInt(document.getElementById("in_endindex").value);
+
+var PREFIX="http://www.youtube.com/watch?v=";
+var THUMBNAILPRE="<img src=\"https://i.ytimg.com/vi/";
+var THUMBNAILPOST="/mqdefault.jpg\">";
+
+var XMLFEED="";
+var FEED_PLAYLIST="";
+var FEED_CHANNEL="";
+
+if (window.XMLHttpRequest)
+  {// code for IE7+, Firefox, Chrome, Opera, Safari
+  xmlhttp=new XMLHttpRequest();
+  }
+else
+  {// code for IE6, IE5
+  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+
+for (INDEX=STARTINDEX; INDEX<=ENDINDEX; INDEX+=50) { //MAHALOOP
+
+FEED_PLAYLIST = "http://gdata.youtube.com/feeds/api/playlists/"+PLAYLIST+"?max-results=50&start-index="+INDEX+SEARCH
+// like http://gdata.youtube.com/feeds/api/playlists/PL6E92FE8AF927E4F1
+
+FEED_CHANNEL = "https://gdata.youtube.com/feeds/api/users/"+CHANNEL+"/uploads?max-results=50&start-index="+INDEX+SEARCH;
+// like https://gdata.youtube.com/feeds/api/users/breakingtheset/uploads?max-results=50&start-index=1
+
+XMLFEED = CHANNEL ? FEED_CHANNEL : FEED_PLAYLIST ;
+
+console.log(XMLFEED)
+
+xmlhttp.open("GET",XMLFEED,false);
+xmlhttp.send();
+xmlDoc=xmlhttp.responseXML;
+
+var x=xmlDoc.getElementsByTagName("entry");
+console.log(x.length + " videos found in " + XMLFEED);
+
+if(x.length == 0) {
+PITARA += "<p>No more results found from index "+INDEX+" onwards";
+break; }
+
+PITARA += "<p>Listing "+x.length+ " videos from index "+INDEX+" onwards from "+XMLFEED+"</p>";
+PITARA += "<table><tr><th>Image</th><th width=200>Title</th><th>Description</th></tr>";
+var KEY="";
+var CONTENT="";
+
+for (i=0;i<x.length;i++)
+  {
+  KEY=x[i].getElementsByTagName("id")[0].childNodes[0].nodeValue.split("/").splice(-1);
+  PITARA += "<tr><td>";
+  PITARA += "<a href=\""+PREFIX+KEY+"\">"+THUMBNAILPRE+KEY+THUMBNAILPOST+"</a>";
+  PITARA += "</td><td>";
+  PITARA += "<small>" + (INDEX+i)+".</small>";
+  PITARA += "<h3><a href=\""+PREFIX+KEY+"\">"+x[i].getElementsByTagName("title")[0].childNodes[0].nodeValue+"</a></h3>";
+  PITARA += "<small>Duration: " + secondsToHms(x[i].getElementsByTagName("yt:duration")[0].getAttribute('seconds')); // to access <yt:duration seconds='245'/>
+  PITARA += "<br>Published on " + x[i].getElementsByTagName("published")[0].childNodes[0].nodeValue.substring(0, 10);
+  PITARA += "</small>";
+  PITARA += "</td><td>";
+  if(x[i].getElementsByTagName("media:description")[0].childNodes[0] === undefined)
+    CONTENT = "";
+  else CONTENT = "<pre>"+x[i].getElementsByTagName("media:description")[0].childNodes[0].nodeValue+"</pre>";
+  PITARA += CONTENT;
+  PITARA += "</td></tr>";
+  }
+PITARA += "</table>";
+//PITARA += "<p>INDEX = "+INDEX+" listing over.</p>"; //was only for debugging.
+
+
+} //MAHALOOP CLOSED
+
+document.getElementById("out_listing").innerHTML = PITARA;
+} // function listchannel() closed
+
+
+
+function secondsToHms(d) {
+/* got this from http://stackoverflow.com/a/5539081/4355695 */
+d = Number(d);
+var h = Math.floor(d / 3600);
+var m = Math.floor(d % 3600 / 60);
+var s = Math.floor(d % 3600 % 60);
+return ((h > 0 ? h + ":" : "") + (m > 0 ? (h > 0 && m < 10 ? "0" : "") + m + ":" : "0:") + (s < 10 ? "0" : "") + s); }
+
+
+</script>
+
+</body>
+</html>
