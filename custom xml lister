@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table, th, td {
+    border: 1px solid black;
+    border-collapse:collapse;
+}
+th, td {
+    padding: 5px;
+}
+pre {
+ white-space: pre-wrap;       /* css-3 */
+ white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+ white-space: -pre-wrap;      /* Opera 4-6 */
+ white-space: -o-pre-wrap;    /* Opera 7 */
+ word-wrap: break-word;       /* Internet Explorer 5.5+ */
+ font-family: Calibri, Arial, serif;
+ height: 170px;
+ overflow: auto; /*longer descriptions will get a scrollbar */
+}
+body {
+font-family: Calibri, Arial, serif;
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+<h2>Arvind Gupta Toys</h2>
+<input type="button" value="Click to List" onclick="listchannel()"><br />
+<div id="out_listing"></div>
+
+<script>
+function listchannel() {
+var XMLFEED="marathi.xml";
+document.getElementById("out_listing").innerHTML = "Loading.. please wait..";
+var PITARA = ""; 
+
+if (window.XMLHttpRequest)
+  {// code for IE7+, Firefox, Chrome, Opera, Safari
+  xmlhttp=new XMLHttpRequest();
+  }
+else
+  {// code for IE6, IE5
+  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+xmlhttp.open("GET",XMLFEED,false);
+xmlhttp.send();
+xmlDoc=xmlhttp.responseXML;
+
+var x=xmlDoc.getElementsByTagName("entry");
+console.log(x.length + " videos found in " + XMLFEED);
+
+if(x.length == 0) {
+PITARA += "<p>No entries found in " + XMLFEED + "</p>";
+return; }
+
+var ID = "";
+var TITLE = "";
+var DURATION = "";
+var DATE = "";
+var DESCRIPTION = "";
+
+PITARA += "<table><tr><th>Image</th><th width=200>Title</th><th>Description</th></tr>";
+
+for (i=0;i<x.length;i++)
+  {
+  ID=x[i].getElementsByTagName("id")[0].childNodes[0].nodeValue;
+  TITLE = x[i].getElementsByTagName("title")[0].childNodes[0].nodeValue;
+  DURATION = x[i].getElementsByTagName("duration")[0].childNodes[0].nodeValue;
+  DATE = x[i].getElementsByTagName("date")[0].childNodes[0].nodeValue;
+  if(x[i].getElementsByTagName("description")[0].childNodes[0] === undefined)
+    DESCRIPTION = "";
+  else DESCRIPTION = x[i].getElementsByTagName("description")[0].childNodes[0].nodeValue;
+  
+  PITARA += "<tr><td>";
+  PITARA += "<a href=\"toysfromtrash/"+ID+".mp4\"><img src=\"toysfromtrash-img/"+ID+".jpg\" /></a>";
+  PITARA += "</td><td>";
+  PITARA += "<small>" + (1+i)+".</small>";
+  PITARA += "<h3><a href=\"toysfromtrash/"+ID+".mp4\">"+TITLE+"</a></h3>";
+  PITARA += "<small>Duration: " + DURATION; // to access <yt:duration seconds='245'/>
+  PITARA += "<br>Published on " + DATE;
+  PITARA += "</small>";
+  PITARA += "</td><td>";
+  PITARA += DESCRIPTION;
+  PITARA += "</td></tr>";
+  
+  } // closing the for loop for traversing though each entry in the currently loaded xml.
+
+PITARA += "</table>";
+document.getElementById("out_listing").innerHTML = PITARA;
+
+} // function listchannel() closed
+</script>
+
+</body>
+</html>
