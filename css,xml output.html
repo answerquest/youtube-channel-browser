@@ -34,9 +34,9 @@ Search query, if any: <input id="in_search"> <small>like Hindi, English, Marathi
 Index from <input id="in_startindex" value="1"> to <input id="in_endindex" value="500"> <small>(1 to 500 will list the latest 500 videos) (note: if using search terms, cannot go beyond 500)</small> <br>
 <input type="button" value="Click to List" onclick="listchannel()">
 <div id="out_listing"></div>
+<br><br><div id="out_images"></div>
 <br>CSV: <textarea id="out_raw"></textarea>
 <br>XML: <textarea id="out_xml"></textarea>
-<br><br><div id="out_images"></div>
 
 <script>
 function listchannel() {
@@ -48,6 +48,7 @@ var PLAYLIST = document.getElementById("in_playlist").value.trim();
 var SEARCH = document.getElementById("in_search").value ? "&q=" + document.getElementById("in_search").value.replace(/ /g,"+") : "";
 var STARTINDEX = parseInt(document.getElementById("in_startindex").value);
 var ENDINDEX = parseInt(document.getElementById("in_endindex").value);
+var COUNT = 0;
 
 var PREFIX="http://www.youtube.com/watch?v=";
 var THUMBNAILPRE="<img src=\"https://i.ytimg.com/vi/";
@@ -107,6 +108,7 @@ for (i=0;i<x.length;i++)
   PITARA += "<small>" + (INDEX+i)+".</small>";
   PITARA += "<h3><a href=\""+PREFIX+KEY+"\">"+x[i].getElementsByTagName("title")[0].childNodes[0].nodeValue+"</a></h3>";
   PITARA += "<small>Duration: " + secondsToHms(x[i].getElementsByTagName("yt:duration")[0].getAttribute('seconds')); // to access <yt:duration seconds='245'/>
+  PITARA += ", " + x[i].getElementsByTagName("yt:statistics")[0].getAttribute('viewCount') + " views";
   PITARA += "<br>Published on " + x[i].getElementsByTagName("published")[0].childNodes[0].nodeValue.substring(0, 10);
   PITARA += "</small>";
   PITARA += "</td><td>";
@@ -117,23 +119,28 @@ for (i=0;i<x.length;i++)
   PITARA += "</td></tr>";
   
   // for CSV:
-  RAW += "\"" + KEY + "\",\"" + x[i].getElementsByTagName("title")[0].childNodes[0].nodeValue + "\",\"" + secondsToHms(x[i].getElementsByTagName("yt:duration")[0].getAttribute('seconds')) + "\",\"" + x[i].getElementsByTagName("published")[0].childNodes[0].nodeValue.substring(0, 10) + "\",\"" + CONTENT.replace(/\n/g, "<br />") + "\"" + "\n";
+  RAW += "\"" + KEY + "\",\"" + x[i].getElementsByTagName("title")[0].childNodes[0].nodeValue + "\",\"" + secondsToHms(x[i].getElementsByTagName("yt:duration")[0].getAttribute('seconds')) + "\",\"" + x[i].getElementsByTagName("published")[0].childNodes[0].nodeValue.substring(0, 10) + "\",\"" + CONTENT.replace(/\n/g, "<br />") + "\",\"" + x[i].getElementsByTagName("yt:statistics")[0].getAttribute('viewCount') + "\"\n";
+
   // for images list:
   IMAGES += "<a href=\"http://i.ytimg.com/vi/" + KEY + "/mqdefault.jpg\">" + KEY + ".jpg</a><br>";
   
   // for XML:
-  XML += "<entry>\n<id>" + KEY + "</id>\n<title><![CDATA[" + x[i].getElementsByTagName("title")[0].childNodes[0].nodeValue + "]]></title>\n<duration>" + secondsToHms(x[i].getElementsByTagName("yt:duration")[0].getAttribute('seconds')) + "</duration>\n<date>" + x[i].getElementsByTagName("published")[0].childNodes[0].nodeValue.substring(0, 10) + "</date>\n<description><![CDATA[" + CONTENT.replace(/\n/g, "<br />") + "]]></description>\n</entry>\n\n";
+  XML += "<entry>\n<id>" + KEY + "</id>\n<title><![CDATA[" + x[i].getElementsByTagName("title")[0].childNodes[0].nodeValue + "]]></title>\n<duration>" + secondsToHms(x[i].getElementsByTagName("yt:duration")[0].getAttribute('seconds')) + "</duration>\n<date>" + x[i].getElementsByTagName("published")[0].childNodes[0].nodeValue.substring(0, 10) + "</date>\n<description><![CDATA[" + CONTENT.replace(/\n/g, "<br />") + "]]></description>\n<viewCount>" + x[i].getElementsByTagName("yt:statistics")[0].getAttribute('viewCount') + "</viewCount>\n</entry>\n\n";
+
+  // for total ViewCount:
+  COUNT += parseInt(x[i].getElementsByTagName("yt:statistics")[0].getAttribute('viewCount'));
   } // closing the for loop for traversing though each entry in the currently loaded xml.
 
   PITARA += "</table>";
-//PITARA += "<p>INDEX = "+INDEX+" listing over.</p>"; //was only for debugging.
+  PITARA += "Total viewCount = " + COUNT ;
+  //PITARA += "<p>INDEX = "+INDEX+" listing over.</p>"; //was only for debugging.
 
 
 } //MAHALOOP CLOSED
 XML += "</feed>";
 document.getElementById("out_listing").innerHTML = PITARA;
+//document.getElementById("out_images").innerHTML = "Thumbnails listed below. Use DownThemAll, with renaming mask set to *text* to archive them.<br>" + IMAGES;
 document.getElementById("out_raw").value = RAW;
-document.getElementById("out_images").innerHTML = IMAGES;
 document.getElementById("out_xml").value = XML;
 } // function listchannel() closed
 
